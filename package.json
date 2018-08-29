@@ -4,7 +4,9 @@
   "description": "",
   "main": "app.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node app.js",
+    "dbuild": "docker build -t weather-api .",
+    "drun": "docker run -p 55555:8080 weather-api"
   },
   "repository": {
     "type": "git",

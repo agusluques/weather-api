@@ -21,7 +21,22 @@ app.get('/weather/:city_id', function(req, res){
 	var getReq = https.request(options, function(result) {
 		    
 	    result.on('data', function(data) {
-	        res.send( JSON.parse(data) );
+	    	data_json = JSON.parse(data);
+
+	    	/*fechas = [];
+	    	dias = 0, i = 0;
+	    	fechas[dias] = Date(data_json.list[i].dt_text + "UTC").setHours(0,0,0,0);
+
+	    	console.log(str(fechas[dias]));
+	    	while (fechas[dias] == new Date(data_json.list[i].dt_text + "UTC").setHours(0,0,0,0)){
+	    		
+
+				console.log("temp dia "+ str(new Date(data_json.list[i].dt_text + "UTC")) + " : " + data_json.list[i].main.temp);
+	    		
+	    		i++;
+	    	}*/
+
+	        res.send( data_json );
 	    });
 	});
 
@@ -35,6 +50,6 @@ app.get('/cities', function(req, res){
 	res.send('Todas las ciudades');
 })
 
-app.listen(3000, function () {
-  console.log('Example app listening on port 3000!');
+app.listen(8080, function () {
+  console.log('Example app listening on port 8080!');
 });
