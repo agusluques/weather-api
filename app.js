@@ -50,6 +50,8 @@ app.get('/cities', function(req, res){
 	res.send('Todas las ciudades');
 })
 
-app.listen(8080, function () {
-  console.log('Example app listening on port 8080!');
+const PORT = process.env.PORT || 8080;
+
+app.listen(PORT, function () {
+  console.log('Runing on ' + PORT + '...');
 });
