@@ -128,7 +128,8 @@ app.get('/cities', function(req, res){
 		var example = 'buenos aires, ar';
 
 		var filteredCities = obj.filter(el => (el.name + ', ' + el.country).toLowerCase().includes(example.toLowerCase()))
-								.sort((a,b) => a.name + ', ' + a.country < b.name + ', ' + b.country ? -1 : 1);
+								.sort((a,b) => a.name + ', ' + a.country < b.name + ', ' + b.country ? -1 : 1)
+								.map(function(x) { return {id: x.id, nombre: x.name + ', ' + x.country}; });
 
 		res.send(filteredCities);
 	});
