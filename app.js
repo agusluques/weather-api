@@ -3,7 +3,16 @@ var https = require('https');
 
 var app = express();
 
-const API_KEY = "5516ab386ad112c122c857849a9555a3";
+const API_KEY = "&APPID=5516ab386ad112c122c857849a9555a3";
+const unidad_temp = '&units=metric'
+
+
+const horarios_diurnos = ["12:00:00","15:00:00","18:00:00","21:00:00"];
+const horarios_nocturnos = ["00:00:00","03:00:00","06:00:00","09:00:00"];
+const cantidad_dias = 5;
+
+const id_ciudad_Buenos_Aires = 3433955;
+
 
 
 app.get('/', function (req, res) {
@@ -14,27 +23,83 @@ app.get('/weather/:city_id', function(req, res){
 	var options = {
 		host :  'api.openweathermap.org',
 		port : 443,
-		path : '/data/2.5/forecast?id=' + req.params.city_id + '&APPID=' + API_KEY + '&units=metric',
+		path : '/data/2.5/forecast?id=' + req.params.city_id + API_KEY + unidad_temp,
 		method : 'GET'
 	}
+
+
 
 	var getReq = https.request(options, function(result) {
 		    
 	    result.on('data', function(data) {
 	    	data_json = JSON.parse(data);
-
-	    	/*fechas = [];
-	    	dias = 0, i = 0;
-	    	fechas[dias] = Date(data_json.list[i].dt_text + "UTC").setHours(0,0,0,0);
-
-	    	console.log(str(fechas[dias]));
-	    	while (fechas[dias] == new Date(data_json.list[i].dt_text + "UTC").setHours(0,0,0,0)){
+	    	
+	    	//Este arreglo contendra las temperaturas para el dia y la noche obtenidas en promedio
+	    	//El formato sera [dia1DIURNA,dia1NOCTURNA,.......,dia5DIURNA,dia5NOCTURNA]
+	    	var temperaturas_diurna_y_nocturna_promedio_por_dia = [];
+	    	//Este arreglo tendra las temperaturas que corresponden a las franjas de 00hs a 09hs
+	    	var temperaturas_nocturnas = [];
+	    	//Este arreglo tendra las temperaturas que corresponden a las franjas de 12hs a 21hs
+	    	var temperaturas_diurnas = [];
+	    	
+	    	//Tomo el primer dia de la muestra para entrar en el loop
+	    	var dia_analizado = (data_json.list[0].dt_txt);
+	    	dia_analizado = (dia_analizado.match(/[0-9]*-[0-9]*-[0-9]*/g)).toString();
+	    	
+	    	for (var j = 0; j < data_json.cnt; j++) {
 	    		
-
-				console.log("temp dia "+ str(new Date(data_json.list[i].dt_text + "UTC")) + " : " + data_json.list[i].main.temp);
+	    		var elemento = data_json.list[j];
+	    		var fecha_y_hora = elemento.dt_txt;
 	    		
-	    		i++;
-	    	}*/
+	    		//Obtengo el dia a partir del parametro "dt_txt" para saber cuando cambia
+	    		var dia_nuevo = fecha_y_hora;
+	    		dia_nuevo = (dia_nuevo.match(/[0-9]*-[0-9]*-[0-9]*/g)).toString();
+
+	    		//Obtengo el horario que me da la API para saber si corresponde a una franja u otra.
+	    		var horario = fecha_y_hora;
+	    		horario = horario.match(/[0-9]*:[0-9]*:[0-9]*/g).toString();
+
+	    		
+	    		//Si el dia no cambio puedo hacer el analisis
+	    		if (dia_analizado.localeCompare(dia_nuevo) == 0) {
+    				if (horarios_diurnos.includes(horario)) {
+    					temperaturas_diurnas.push(elemento.main.temp);
+    				}
+    				else if (horarios_nocturnos.includes(horario)){
+    					temperaturas_nocturnas.push(elemento.main.temp);
+    				}
+    			}
+    			//Si el dia cambio, debo actualizar valores
+    			else{
+    				var temperatura_diurna_promedio = 0;
+    				var temperatura_nocturna_promedio = 0;
+    				
+    				//ESTA FORMA DE CALCULAR PROMEDIO ESTA MAL, HABRIA QUE HACER UNA FUNCION
+    				for (var k = 0; k < temperaturas_diurnas.length; k++) {
+    					temperatura_diurna_promedio += temperaturas_diurnas[k];
+    				}
+    				for (var l = 0; l < temperaturas_nocturnas.length; l++) {
+    					temperatura_nocturna_promedio += temperaturas_nocturnas[l];
+    				}
+    				temperatura_diurna_promedio = temperatura_diurna_promedio/(temperaturas_diurnas.length);
+    				temperatura_nocturna_promedio = temperatura_nocturna_promedio/(temperaturas_nocturnas.length);
+					
+    				//AGREGO LOS VALORES PROMEDIOS AL ARRAY CON LOS 10 VALORES FINALES
+					temperaturas_diurna_y_nocturna_promedio_por_dia.push(temperatura_diurna_promedio);
+					temperaturas_diurna_y_nocturna_promedio_por_dia.push(temperatura_nocturna_promedio);    				
+
+
+					temperaturas_diurnas = [];
+					temperaturas_nocturnas = [];
+    				dia_analizado = (data_json.list[j].dt_txt);
+    				dia_analizado = (dia_analizado.match(/[0-9]*-[0-9]*-[0-9]*/g)).toString();
+   					
+    			}
+			}
+	
+			console.log(temperaturas_diurna_y_nocturna_promedio_por_dia);
+	    	
+	    	
 
 	        res.send( data_json );
 	    });
