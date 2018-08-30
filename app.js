@@ -9,7 +9,7 @@ const unidad_temp = '&units=metric'
 
 const horarios_diurnos = ["12:00:00","15:00:00","18:00:00","21:00:00"];
 const horarios_nocturnos = ["00:00:00","03:00:00","06:00:00","09:00:00"];
-const cantidad_dias = 5;
+
 
 const id_ciudad_Buenos_Aires = 3433955;
 
@@ -45,9 +45,16 @@ app.get('/weather/:city_id', function(req, res){
 	    	//Tomo el primer dia de la muestra para entrar en el loop
 	    	var dia_analizado = (data_json.list[0].dt_txt);
 	    	dia_analizado = (dia_analizado.match(/[0-9]*-[0-9]*-[0-9]*/g)).toString();
+
+	    	var cantidad_de_elementos = data_json.cnt;
 	    	
-	    	for (var j = 0; j < data_json.cnt; j++) {
+	    	for (var j = 0; j < cantidad_de_elementos; j++) {
 	    		
+	    		var dia_cambio = false;
+	    		var es_ultimo = false;
+
+	    		if (j == (cantidad_de_elementos-1)) es_ultimo = true;
+
 	    		var elemento = data_json.list[j];
 	    		var fecha_y_hora = elemento.dt_txt;
 	    		
@@ -61,16 +68,9 @@ app.get('/weather/:city_id', function(req, res){
 
 	    		
 	    		//Si el dia no cambio puedo hacer el analisis
-	    		if (dia_analizado.localeCompare(dia_nuevo) == 0) {
-    				if (horarios_diurnos.includes(horario)) {
-    					temperaturas_diurnas.push(elemento.main.temp);
-    				}
-    				else if (horarios_nocturnos.includes(horario)){
-    					temperaturas_nocturnas.push(elemento.main.temp);
-    				}
-    			}
-    			//Si el dia cambio, debo actualizar valores
-    			else{
+	    		if (dia_analizado.localeCompare(dia_nuevo) != 0) dia_cambio = true;
+    			
+    			if(dia_cambio || es_ultimo){
     				var temperatura_diurna_promedio = 0;
     				var temperatura_nocturna_promedio = 0;
     				
@@ -91,17 +91,23 @@ app.get('/weather/:city_id', function(req, res){
 
 					temperaturas_diurnas = [];
 					temperaturas_nocturnas = [];
-    				dia_analizado = (data_json.list[j].dt_txt);
-    				dia_analizado = (dia_analizado.match(/[0-9]*-[0-9]*-[0-9]*/g)).toString();
-   					
+    				dia_analizado = dia_nuevo;
+    				dia_cambio = false;
+    				es_ultimo = false;
+    			}
+    			
+    			//Agrego la temperatura de ese dia y ese horario al arreglo de la franja que 
+    			//corresponde
+    			if (horarios_diurnos.includes(horario)) {
+    				temperaturas_diurnas.push(elemento.main.temp);
+    			}
+    			else if (horarios_nocturnos.includes(horario)){
+    				temperaturas_nocturnas.push(elemento.main.temp);
     			}
 			}
-	
-			console.log(temperaturas_diurna_y_nocturna_promedio_por_dia);
 	    	
-	    	
-
-	        res.send( data_json );
+			//Se devuelve el arreglo con el formato de dos temperaturas por dia
+	        res.send( temperaturas_diurna_y_nocturna_promedio_por_dia );
 	    });
 	});
 
