@@ -62,6 +62,7 @@ app.get('/weather/:city_id', function(req, res){
 	    	dia_analizado = (dia_analizado.match(/[0-9]*-[0-9]*-[0-9]*/g)).toString();
 
 	    	var cantidad_de_elementos = data_json.cnt;
+	    	var dias_procesados = 0;
 	    	
 	    	for (var j = 0; j < cantidad_de_elementos; j++) {
 	    		
@@ -81,9 +82,12 @@ app.get('/weather/:city_id', function(req, res){
 	    		var horario = fecha_y_hora;
 	    		horario = horario.match(/[0-9]*:[0-9]*:[0-9]*/g).toString();
 	    		
-	    		//Si el dia no cambio puedo hacer el analisis
-	    		if (dia_analizado.localeCompare(dia_nuevo) != 0) dia_cambio = true;
-    			
+	    		//Detecto si el dia cambio o no
+	    		if (dia_analizado.localeCompare(dia_nuevo) != 0) {
+	    			dia_cambio = true;
+	    			dias_procesados++;
+	    		}
+	    		
     			if(dia_cambio || es_ultimo){
     				var temperatura_diurna_promedio = 0;
     				var temperatura_nocturna_promedio = 0;
@@ -103,12 +107,15 @@ app.get('/weather/:city_id', function(req, res){
     				es_ultimo = false;
     			}
     			
+    			//Limito siempre a 5 dias analizados, esto es por la variabilidad de los
+    			//datos entregados en el Json al momento de hacer la request.
+    			if (dias_procesados == cantidad_de_dias) break;
+
     			//Agrego la temperatura de ese dia y ese horario al arreglo de la franja que 
     			//corresponde
     			if (horarios_diurnos.includes(horario)) {
     				temperaturas_diurnas.push(elemento.main.temp);
-    			}
-    			else if (horarios_nocturnos.includes(horario)){
+    			} else if (horarios_nocturnos.includes(horario)){
     				temperaturas_nocturnas.push(elemento.main.temp);
     			}
 			}
