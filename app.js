@@ -10,10 +10,24 @@ const unidad_temp = '&units=metric'
 
 const horarios_diurnos = ["12:00:00","15:00:00","18:00:00","21:00:00"];
 const horarios_nocturnos = ["00:00:00","03:00:00","06:00:00","09:00:00"];
-
-
+const cantidad_de_dias = 5;
+//id de la ciudad de Buenos Aires, Capital Federal.
 const id_ciudad_Buenos_Aires = 3433955;
 
+//Funcion auxiliar que calcula el promedio de los elementos de un arreglo.
+//Input: arreglo con valores.
+//Output: promedio de los valores que componen el arreglo.
+function calcularPromedio(arreglo) {
+	var promedio = 0;
+	var sumaValores = 0;
+	var cantidad = arreglo.length;
+	
+	for (var i = 0; i < cantidad; i++) {
+    	 sumaValores += arreglo[i];
+    }
+
+    return (sumaValores/cantidad);
+}
 
 
 app.get('/', function (req, res) {
@@ -66,7 +80,6 @@ app.get('/weather/:city_id', function(req, res){
 	    		//Obtengo el horario que me da la API para saber si corresponde a una franja u otra.
 	    		var horario = fecha_y_hora;
 	    		horario = horario.match(/[0-9]*:[0-9]*:[0-9]*/g).toString();
-
 	    		
 	    		//Si el dia no cambio puedo hacer el analisis
 	    		if (dia_analizado.localeCompare(dia_nuevo) != 0) dia_cambio = true;
@@ -75,21 +88,14 @@ app.get('/weather/:city_id', function(req, res){
     				var temperatura_diurna_promedio = 0;
     				var temperatura_nocturna_promedio = 0;
     				
-    				//ESTA FORMA DE CALCULAR PROMEDIO ESTA MAL, HABRIA QUE HACER UNA FUNCION
-    				for (var k = 0; k < temperaturas_diurnas.length; k++) {
-    					temperatura_diurna_promedio += temperaturas_diurnas[k];
-    				}
-    				for (var l = 0; l < temperaturas_nocturnas.length; l++) {
-    					temperatura_nocturna_promedio += temperaturas_nocturnas[l];
-    				}
-    				temperatura_diurna_promedio = temperatura_diurna_promedio/(temperaturas_diurnas.length);
-    				temperatura_nocturna_promedio = temperatura_nocturna_promedio/(temperaturas_nocturnas.length);
-					
-    				//AGREGO LOS VALORES PROMEDIOS AL ARRAY CON LOS 10 VALORES FINALES
+    				//Calculo el promedio diurno y nocturno con los valores obtenidos para cada franja.
+    				temperatura_diurna_promedio = calcularPromedio(temperaturas_diurnas);
+    				temperatura_nocturna_promedio = calcularPromedio(temperaturas_nocturnas);
+    			
+    				//Agrego ambos promedios al resultado final.
 					temperaturas_diurna_y_nocturna_promedio_por_dia.push(temperatura_diurna_promedio);
 					temperaturas_diurna_y_nocturna_promedio_por_dia.push(temperatura_nocturna_promedio);    				
-
-
+					//Reset de variables para que empiece el nuevo calculo.
 					temperaturas_diurnas = [];
 					temperaturas_nocturnas = [];
     				dia_analizado = dia_nuevo;
@@ -109,6 +115,7 @@ app.get('/weather/:city_id', function(req, res){
 	    	
 			//Se devuelve el arreglo con el formato de dos temperaturas por dia
 	        res.send( temperaturas_diurna_y_nocturna_promedio_por_dia );
+	        //res.send(data_json);
 	    });
 	});
 
@@ -138,5 +145,5 @@ app.get('/cities', function(req, res){
 const PORT = process.env.PORT || 8080;
 
 app.listen(PORT, function () {
-  console.log('Runing on ' + PORT + '...');
+  console.log('Running on ' + PORT + '...');
 });
