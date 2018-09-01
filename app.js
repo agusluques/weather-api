@@ -1,6 +1,7 @@
 var express = require('express');
 var https = require('https');
-var fs = require('fs')
+var fs = require('fs');
+var _ = require('underscore');
 
 var app = express();
 
@@ -140,7 +141,9 @@ app.get('/cities', function(req, res){
 
 	var filteredCities = archivo_ciudades.filter(el => (el.name + ', ' + el.country).toLowerCase().includes(filtro.toLowerCase()))
 							.sort((a,b) => a.name + ', ' + a.country < b.name + ', ' + b.country ? -1 : 1)
-							.map(function(x) { return {id: x.id, nombre: x.name + ', ' + x.country + ' [' + x.coord.lon + ', ' + x.coord.lat + ']'}; });
+							.map(function(x) { return {id: x.id, nombre: x.name + ', ' + x.country}; });
+
+	filteredCities = _.uniq(filteredCities, function(p){ return p.nombre; } );
 
 	res.send(filteredCities);
 })
