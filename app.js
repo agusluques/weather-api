@@ -4,6 +4,8 @@ var fs = require('fs')
 
 var app = express();
 
+var archivo_ciudades;
+
 const API_KEY = "&APPID=5516ab386ad112c122c857849a9555a3";
 const unidad_temp = '&units=metric'
 
@@ -133,24 +135,25 @@ app.get('/weather/:city_id', function(req, res){
 })
 
 app.get('/cities', function(req, res){
-	var obj;
-	fs.readFile('./assets/city.list.json', 'utf8', function (err, data) {
-		if (err) throw err;
-		obj = JSON.parse(data);
 
-		//TODO: borrar esto y tomar lo que recibe el get o post
-		var example = 'buenos aires, ar';
+	var filtro = req.query.filter;
 
-		var filteredCities = obj.filter(el => (el.name + ', ' + el.country).toLowerCase().includes(example.toLowerCase()))
-								.sort((a,b) => a.name + ', ' + a.country < b.name + ', ' + b.country ? -1 : 1)
-								.map(function(x) { return {id: x.id, nombre: x.name + ', ' + x.country}; });
+	var filteredCities = archivo_ciudades.filter(el => (el.name + ', ' + el.country).toLowerCase().includes(filtro.toLowerCase()))
+							.sort((a,b) => a.name + ', ' + a.country < b.name + ', ' + b.country ? -1 : 1)
+							.map(function(x) { return {id: x.id, nombre: x.name + ', ' + x.country + ' [' + x.coord.lon + ', ' + x.coord.lat + ']'}; });
 
-		res.send(filteredCities);
-	});
+	res.send(filteredCities);
 })
 
 const PORT = process.env.PORT || 8080;
 
 app.listen(PORT, function () {
   console.log('Running on ' + PORT + '...');
+  fs.readFile('./assets/city.list.json', 'utf8', function (err, data) {
+		if (err) throw err;
+		archivo_ciudades = JSON.parse(data);
+
+		archivo_ciudades = archivo_ciudades.filter(el => el.country = 'AR');
+		console.log('Archivo cargado y filtrado por ciudades de Argentina.');
+	});
 });
