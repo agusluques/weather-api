@@ -5,6 +5,7 @@ var _ = require('underscore');
 
 var app = express();
 
+// se usa para levantar el archivo solo 1 vez y guardarlo en memoria del servidor
 var archivo_ciudades;
 
 const API_KEY = "&APPID=5516ab386ad112c122c857849a9555a3";
