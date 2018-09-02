@@ -33,23 +33,27 @@ function calcularPromedio(arreglo) {
     return (sumaValores/cantidad);
 }
 
-function determinarEstado(codigoDeEstado) {
+function determinarEstado(codigoDeEstado, es_de_dia) {
 	if (isNaN(codigoDeEstado)) return "undefined";
 
 	if(codigoDeEstado < 300){
-		return "Thunderstorm"; //tormenta
+		return "11d"; //tormenta
 	} else if (codigoDeEstado < 500){
-		return "Drizzle"; //llovizna
-	} else if (codigoDeEstado < 600){
-		return "Rain"; //lluvia
+		return "09d"; //llovizna
+	} else if (codigoDeEstado < 600){  //lluvia
+		if(es_de_dia) {return "10d";}
+		else {return "10n";}
 	} else if (codigoDeEstado < 700){
-		return "Snow"; //nieve
+		return "13d"; //nieve
 	} else if (codigoDeEstado < 800){
-		return "Atmosphere"; //neblina
-	} else if (codigoDeEstado == 800){
-		return "Clear"; //despejado
+		return "50d"; //neblina
+	} else if (codigoDeEstado == 800){ //despejado
+		if (es_de_dia) {return "01d";}
+		else {return "01n";} 
 	}
-	return "Clouds"; //nublado
+
+	if (es_de_dia) {return "02d";} //nublado
+	return "02n"; 
 }
 
 function hacerJsonClima(datos, estados){
@@ -64,10 +68,10 @@ function hacerJsonClima(datos, estados){
 	
 	for (var i = 0; i < cantidad_de_dias; i++) {
 		resultado[i].temp_diurna = datos[iterador_datos];
-		resultado[i].estado_dia = determinarEstado(estados[iterador_datos]);
+		resultado[i].estado_dia = determinarEstado(estados[iterador_datos],true);
 		iterador_datos++;
 		resultado[i].temp_nocturna = datos[iterador_datos];
-		resultado[i].estado_noche = determinarEstado(estados[iterador_datos]);
+		resultado[i].estado_noche = determinarEstado(estados[iterador_datos],false);
 		iterador_datos++;
 	}
 	return resultado;
