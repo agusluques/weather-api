@@ -33,27 +33,29 @@ function calcularPromedio(arreglo) {
     return (sumaValores/cantidad);
 }
 
-function determinarEstado(codigoDeEstado, es_de_dia) {
-	if (isNaN(codigoDeEstado)) return "undefined";
-
-	if(codigoDeEstado < 300){
-		return "11d"; //tormenta
-	} else if (codigoDeEstado < 500){
-		return "09d"; //llovizna
-	} else if (codigoDeEstado < 600){  //lluvia
-		if(es_de_dia) {return "10d";}
-		else {return "10n";}
-	} else if (codigoDeEstado < 700){
-		return "13d"; //nieve
-	} else if (codigoDeEstado < 800){
-		return "50d"; //neblina
-	} else if (codigoDeEstado == 800){ //despejado
-		if (es_de_dia) {return "01d";}
-		else {return "01n";} 
-	}
-
-	if (es_de_dia) {return "02d";} //nublado
-	return "02n"; 
+function obtenerIcono(arreglo_de_iconos, es_de_dia) {
+	var icono_final = "";
+	if (arreglo_de_iconos.length == 0) return "undefined";
+    
+    //algoritmo para elemento mas repetido
+    var modeMap = {};
+    var maxEl = arreglo_de_iconos[0], maxCount = 1;
+    for(var i = 0; i < arreglo_de_iconos.length; i++)
+    {
+        var el = arreglo_de_iconos[i];
+        if(modeMap[el] == null)
+            modeMap[el] = 1;
+        else
+            modeMap[el]++;  
+        if(modeMap[el] > maxCount)
+        {
+            icono_final = el;
+            maxCount = modeMap[el];
+        }
+    }
+    
+	if (es_de_dia) return (icono_final+"d");
+	return (icono_final+"n");
 }
 
 function hacerJsonClima(datos, estados){
@@ -68,10 +70,10 @@ function hacerJsonClima(datos, estados){
 	
 	for (var i = 0; i < cantidad_de_dias; i++) {
 		resultado[i].temp_diurna = datos[iterador_datos];
-		resultado[i].estado_dia = determinarEstado(estados[iterador_datos],true);
+		resultado[i].estado_dia = estados[iterador_datos];
 		iterador_datos++;
 		resultado[i].temp_nocturna = datos[iterador_datos];
-		resultado[i].estado_noche = determinarEstado(estados[iterador_datos],false);
+		resultado[i].estado_noche = estados[iterador_datos];
 		iterador_datos++;
 	}
 	return resultado;
@@ -102,7 +104,7 @@ app.get('/weather/:city_id', function(req, res){
 	    	//Este arreglo contendra las temperaturas para el dia y la noche obtenidas en promedio
 	    	//El formato sera [dia1DIURNA,dia1NOCTURNA,.......,dia5DIURNA,dia5NOCTURNA]
 	    	var temperaturas_diurna_y_nocturna_promedio_por_dia = [];
-	    	var estados_clima_diurnos_y_nocturnos_promedio_por_dia = [];
+	    	var estados_clima_diurnos_y_nocturnos_final_por_dia = [];
 	    	//Este arreglo tendra las temperaturas que corresponden a las franjas de 00hs a 09hs
 	    	var temperaturas_nocturnas = [];
 	    	//Este arreglo tendra las temperaturas que corresponden a las franjas de 12hs a 21hs
@@ -122,6 +124,8 @@ app.get('/weather/:city_id', function(req, res){
 	    		
 	    		var dia_cambio = false;
 	    		var es_ultimo = false;
+	    		var icono_dia = "";
+	    		var icono_noche = "";
 
 	    		if (j == (cantidad_de_elementos-1)) es_ultimo = true;
 
@@ -146,8 +150,8 @@ app.get('/weather/:city_id', function(req, res){
     				var temperatura_diurna_promedio = 0;
     				var temperatura_nocturna_promedio = 0;
 
-    				var estado_del_clima_diurno_promedio = 0;
-    				var estado_del_clima_nocturno_promedio = 0;
+    				var estado_del_clima_diurno_final = "";
+    				var estado_del_clima_nocturno_final = "";
 
     				//Esto es serio candidato al refactor pero tiempos desesperados requieren medidas desesperadas ?)
     				if(es_ultimo){
@@ -155,10 +159,12 @@ app.get('/weather/:city_id', function(req, res){
     					//corresponde
     					if (horarios_diurnos.includes(horario)) {
     						temperaturas_diurnas.push(elemento.main.temp);
-    						estados_del_clima_diurnos.push(elemento.weather[0].id);
+    						icono_dia = elemento.weather[0].icon[0] + elemento.weather[0].icon[1]; 
+    						estados_del_clima_diurnos.push(icono_dia);
     					} else if (horarios_nocturnos.includes(horario)){
     						temperaturas_nocturnas.push(elemento.main.temp);
-    						estados_del_clima_nocturnos.push(elemento.weather[0].id);
+    						icono_noche = elemento.weather[0].icon[0] + elemento.weather[0].icon[1];
+    						estados_del_clima_nocturnos.push(icono_noche);
     					}
     				}
     				
@@ -168,16 +174,16 @@ app.get('/weather/:city_id', function(req, res){
 
 
     				//Calculo del promedio de estado climatico para franja diurna y nocturna.
-    				estado_del_clima_diurno_promedio = calcularPromedio(estados_del_clima_diurnos);
-    				estado_del_clima_nocturno_promedio = calcularPromedio(estados_del_clima_nocturnos);
+    				estado_del_clima_diurno_final = obtenerIcono(estados_del_clima_diurnos,true);
+    				estado_del_clima_nocturno_final = obtenerIcono(estados_del_clima_nocturnos,false);
     				
     				
     				//Agrego ambos promedios al resultado final.
 					temperaturas_diurna_y_nocturna_promedio_por_dia.push(temperatura_diurna_promedio);
 					temperaturas_diurna_y_nocturna_promedio_por_dia.push(temperatura_nocturna_promedio);    				
 					
-					estados_clima_diurnos_y_nocturnos_promedio_por_dia.push(estado_del_clima_diurno_promedio);
-					estados_clima_diurnos_y_nocturnos_promedio_por_dia.push(estado_del_clima_nocturno_promedio);
+					estados_clima_diurnos_y_nocturnos_final_por_dia.push(estado_del_clima_diurno_final);
+					estados_clima_diurnos_y_nocturnos_final_por_dia.push(estado_del_clima_nocturno_final);
 
 					//Reset de variables para que empiece el nuevo calculo.
 					temperaturas_diurnas = [];
@@ -200,15 +206,17 @@ app.get('/weather/:city_id', function(req, res){
     			//corresponde
     			if (horarios_diurnos.includes(horario)) {
     				temperaturas_diurnas.push(elemento.main.temp);
-    				estados_del_clima_diurnos.push(elemento.weather[0].id);
+    				icono_dia = elemento.weather[0].icon[0] + elemento.weather[0].icon[1];
+    				estados_del_clima_diurnos.push(icono_dia);
     			} else if (horarios_nocturnos.includes(horario)){
     				temperaturas_nocturnas.push(elemento.main.temp);
-    				estados_del_clima_nocturnos.push(elemento.weather[0].id);
+    				icono_noche = elemento.weather[0].icon[0] + elemento.weather[0].icon[1];
+    				estados_del_clima_nocturnos.push(icono_noche);
     			}
 			}
 	    	
 	    	//convierto las temperaturas a formato JSON
-	    	var datos_de_salida = hacerJsonClima(temperaturas_diurna_y_nocturna_promedio_por_dia, estados_clima_diurnos_y_nocturnos_promedio_por_dia);
+	    	var datos_de_salida = hacerJsonClima(temperaturas_diurna_y_nocturna_promedio_por_dia, estados_clima_diurnos_y_nocturnos_final_por_dia);
 			
 			//Se devuelve el JSON con el formato de dos temperaturas y dos estados por dia
 	        res.send( datos_de_salida );
