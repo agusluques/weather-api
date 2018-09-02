@@ -11,12 +11,12 @@ var archivo_ciudades;
 const API_KEY = "&APPID=5516ab386ad112c122c857849a9555a3";
 const unidad_temp = '&units=metric'
 
-
-const horarios_diurnos = ["12:00:00","15:00:00","18:00:00","21:00:00"];
-const horarios_nocturnos = ["00:00:00","03:00:00","06:00:00","09:00:00"];
+const horarios_diurnos = ["00:00:00","03:00:00","06:00:00","09:00:00"];
+const horarios_nocturnos = ["12:00:00","15:00:00","18:00:00","21:00:00"];
 const cantidad_de_dias = 5;
 //id de la ciudad de Buenos Aires, Capital Federal.
 const id_ciudad_Buenos_Aires = 3433955;
+const codigo_ciudad_no_encontrada = 404;
 
 //Funcion auxiliar que calcula el promedio de los elementos de un arreglo.
 //Input: arreglo con valores.
@@ -31,6 +31,27 @@ function calcularPromedio(arreglo) {
     }
 
     return (sumaValores/cantidad);
+}
+
+function hacerJsonClima(datos){
+	var iterador_datos = 0;
+	var resultado = [
+		{"temp_diurna":"","estado_dia":"","temp_nocturna":"","estado_noche":""},
+		{"temp_diurna":"","estado_dia":"","temp_nocturna":"","estado_noche":""},
+		{"temp_diurna":"","estado_dia":"","temp_nocturna":"","estado_noche":""},
+		{"temp_diurna":"","estado_dia":"","temp_nocturna":"","estado_noche":""},
+		{"temp_diurna":"","estado_dia":"","temp_nocturna":"","estado_noche":""}
+		];
+	//falta que cargue estados del tiempo como puede ser lluvioso soleado etc.
+	for (var i = 0; i < cantidad_de_dias; i++) {
+		resultado[i].temp_diurna = datos[iterador_datos];
+		iterador_datos++;
+		resultado[i].temp_nocturna = datos[iterador_datos];
+		iterador_datos++;
+		resultado[i].estado_dia = "soleado";
+		resultado[i].estado_noche = "lluvioso";
+	}
+	return resultado;
 }
 
 
@@ -52,6 +73,8 @@ app.get('/weather/:city_id', function(req, res){
 		    
 	    result.on('data', function(data) {
 	    	data_json = JSON.parse(data);
+	    	//Si el codigo de ciudad no es correcto, se informa.
+	    	if (data_json.cod == 404) res.send("Ciudad invalida o no encontrada!");
 	    	
 	    	//Este arreglo contendra las temperaturas para el dia y la noche obtenidas en promedio
 	    	//El formato sera [dia1DIURNA,dia1NOCTURNA,.......,dia5DIURNA,dia5NOCTURNA]
@@ -95,6 +118,17 @@ app.get('/weather/:city_id', function(req, res){
     			if(dia_cambio || es_ultimo){
     				var temperatura_diurna_promedio = 0;
     				var temperatura_nocturna_promedio = 0;
+
+    				//Esto es serio candidato al refactor pero tiempos desesperados requieren medidas desesperadas ?)
+    				if(es_ultimo){
+    					//Agrego la temperatura de ese dia y ese horario al arreglo de la franja que 
+    					//corresponde
+    					if (horarios_diurnos.includes(horario)) {
+    						temperaturas_diurnas.push(elemento.main.temp);
+    					} else if (horarios_nocturnos.includes(horario)){
+    						temperaturas_nocturnas.push(elemento.main.temp);
+    					}
+    				}
     				
     				//Calculo el promedio diurno y nocturno con los valores obtenidos para cada franja.
     				temperatura_diurna_promedio = calcularPromedio(temperaturas_diurnas);
@@ -124,9 +158,11 @@ app.get('/weather/:city_id', function(req, res){
     			}
 			}
 	    	
-			//Se devuelve el arreglo con el formato de dos temperaturas por dia
-	        res.send( temperaturas_diurna_y_nocturna_promedio_por_dia );
-	        //res.send(data_json);
+	    	//convierto las temperaturas a formato JSON
+	    	var datos_de_salida = hacerJsonClima(temperaturas_diurna_y_nocturna_promedio_por_dia);
+			
+			//Se devuelve el JSON con el formato de dos temperaturas y dos estados por dia
+	        res.send( datos_de_salida );
 	    });
 	});
 
@@ -152,7 +188,7 @@ app.get('/cities', function(req, res){
 const PORT = process.env.PORT || 8080;
 
 app.listen(PORT, function () {
-  console.log('Running on ' + PORT + '...');
+  console.log('Servidor escuchando en el puerto ' + PORT + '...');
   fs.readFile('./assets/city.list.json', 'utf8', function (err, data) {
 		if (err) throw err;
 		archivo_ciudades = JSON.parse(data);
