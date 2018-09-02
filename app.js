@@ -2,6 +2,7 @@ var express = require('express');
 var https = require('https');
 var fs = require('fs');
 var _ = require('underscore');
+var mock = require('./mock.js');
 
 var app = express();
 
@@ -93,145 +94,150 @@ app.get('/weather/:city_id', function(req, res){
 		method : 'GET'
 	}
 
+	if (req.params.city_id == 1 || req.params.city_id == 2){
+		mock.devolverMock(res, req.params.city_id);
+	} else{
 
 
-	var getReq = https.request(options, function(result) {
-		    
-	    result.on('data', function(data) {
-	    	data_json = JSON.parse(data);
-	    	//Si el codigo de ciudad no es correcto, se informa.
-	    	if (data_json.cod == codigo_ciudad_no_encontrada) res.send("Ciudad invalida o no encontrada!");
-	    	
-	    	//Este arreglo contendra las temperaturas para el dia y la noche obtenidas en promedio
-	    	//El formato sera [dia1DIURNA,dia1NOCTURNA,.......,dia5DIURNA,dia5NOCTURNA]
-	    	var temperaturas_diurna_y_nocturna_promedio_por_dia = [];
-	    	var estados_clima_diurnos_y_nocturnos_final_por_dia = [];
-	    	//Este arreglo tendra las temperaturas que corresponden a las franjas de 00hs a 09hs
-	    	var temperaturas_nocturnas = [];
-	    	//Este arreglo tendra las temperaturas que corresponden a las franjas de 12hs a 21hs
-	    	var temperaturas_diurnas = [];
-			//Aca almacenamos los estados del clima
-	    	var estados_del_clima_diurnos = [];
-	    	var estados_del_clima_nocturnos = [];
-	    	
-	    	//Tomo el primer dia de la muestra para entrar en el loop
-	    	var dias_medidos = [];
-	    	var dia_analizado = (data_json.list[0].dt_txt);
-	    	dia_analizado = (dia_analizado.match(/[0-9]*-[0-9]*-[0-9]*/g)).toString();
-	    	dias_medidos.push(dia_analizado);
+		var getReq = https.request(options, function(result) {
+			    
+		    result.on('data', function(data) {
+		    	data_json = JSON.parse(data);
+		    	//Si el codigo de ciudad no es correcto, se informa.
+		    	if (data_json.cod == codigo_ciudad_no_encontrada) res.send("Ciudad invalida o no encontrada!");
+		    	
+		    	//Este arreglo contendra las temperaturas para el dia y la noche obtenidas en promedio
+		    	//El formato sera [dia1DIURNA,dia1NOCTURNA,.......,dia5DIURNA,dia5NOCTURNA]
+		    	var temperaturas_diurna_y_nocturna_promedio_por_dia = [];
+		    	var estados_clima_diurnos_y_nocturnos_final_por_dia = [];
+		    	//Este arreglo tendra las temperaturas que corresponden a las franjas de 00hs a 09hs
+		    	var temperaturas_nocturnas = [];
+		    	//Este arreglo tendra las temperaturas que corresponden a las franjas de 12hs a 21hs
+		    	var temperaturas_diurnas = [];
+				//Aca almacenamos los estados del clima
+		    	var estados_del_clima_diurnos = [];
+		    	var estados_del_clima_nocturnos = [];
+		    	
+		    	//Tomo el primer dia de la muestra para entrar en el loop
+		    	var dias_medidos = [];
+		    	var dia_analizado = (data_json.list[0].dt_txt);
+		    	dia_analizado = (dia_analizado.match(/[0-9]*-[0-9]*-[0-9]*/g)).toString();
+		    	dias_medidos.push(dia_analizado);
 
-	    	var cantidad_de_elementos = data_json.cnt;
-	    	var dias_procesados = 0;
+		    	var cantidad_de_elementos = data_json.cnt;
+		    	var dias_procesados = 0;
 
-	    	
-	    	for (var j = 0; j < cantidad_de_elementos; j++) {
-	    		
-	    		var dia_cambio = false;
-	    		var es_ultimo = false;
-	    		var icono_dia = "";
-	    		var icono_noche = "";
+		    	
+		    	for (var j = 0; j < cantidad_de_elementos; j++) {
+		    		
+		    		var dia_cambio = false;
+		    		var es_ultimo = false;
+		    		var icono_dia = "";
+		    		var icono_noche = "";
 
-	    		if (j == (cantidad_de_elementos-1)) es_ultimo = true;
+		    		if (j == (cantidad_de_elementos-1)) es_ultimo = true;
 
-	    		var elemento = data_json.list[j];
-	    		var fecha_y_hora = elemento.dt_txt;
-	    		
-	    		//Obtengo el dia a partir del parametro "dt_txt" para saber cuando cambia
-	    		var dia_nuevo = fecha_y_hora;
-	    		dia_nuevo = (dia_nuevo.match(/[0-9]*-[0-9]*-[0-9]*/g)).toString();
+		    		var elemento = data_json.list[j];
+		    		var fecha_y_hora = elemento.dt_txt;
+		    		
+		    		//Obtengo el dia a partir del parametro "dt_txt" para saber cuando cambia
+		    		var dia_nuevo = fecha_y_hora;
+		    		dia_nuevo = (dia_nuevo.match(/[0-9]*-[0-9]*-[0-9]*/g)).toString();
 
-	    		//Obtengo el horario que me da la API para saber si corresponde a una franja u otra.
-	    		var horario = fecha_y_hora;
-	    		horario = horario.match(/[0-9]*:[0-9]*:[0-9]*/g).toString();
-	    		
-	    		//Detecto si el dia cambio o no
-	    		if (dia_analizado.localeCompare(dia_nuevo) != 0) {
-	    			dia_cambio = true;
-	    			dias_procesados++;
-	    		}
-	    		
-    			if(dia_cambio || es_ultimo){
-    				var temperatura_diurna_promedio = 0;
-    				var temperatura_nocturna_promedio = 0;
+		    		//Obtengo el horario que me da la API para saber si corresponde a una franja u otra.
+		    		var horario = fecha_y_hora;
+		    		horario = horario.match(/[0-9]*:[0-9]*:[0-9]*/g).toString();
+		    		
+		    		//Detecto si el dia cambio o no
+		    		if (dia_analizado.localeCompare(dia_nuevo) != 0) {
+		    			dia_cambio = true;
+		    			dias_procesados++;
+		    		}
+		    		
+	    			if(dia_cambio || es_ultimo){
+	    				var temperatura_diurna_promedio = 0;
+	    				var temperatura_nocturna_promedio = 0;
 
-    				var estado_del_clima_diurno_final = "";
-    				var estado_del_clima_nocturno_final = "";
+	    				var estado_del_clima_diurno_final = "";
+	    				var estado_del_clima_nocturno_final = "";
 
-    				//Esto es serio candidato al refactor pero tiempos desesperados requieren medidas desesperadas ?)
-    				if(es_ultimo){
-    					//Agrego la temperatura de ese dia y ese horario al arreglo de la franja que 
-    					//corresponde
-    					if (horarios_diurnos.includes(horario)) {
-    						temperaturas_diurnas.push(elemento.main.temp);
-    						icono_dia = elemento.weather[0].icon[0] + elemento.weather[0].icon[1]; 
-    						estados_del_clima_diurnos.push(icono_dia);
-    					} else if (horarios_nocturnos.includes(horario)){
-    						temperaturas_nocturnas.push(elemento.main.temp);
-    						icono_noche = elemento.weather[0].icon[0] + elemento.weather[0].icon[1];
-    						estados_del_clima_nocturnos.push(icono_noche);
-    					}
-    				}
-    				
-    				//Calculo el promedio diurno y nocturno con los valores obtenidos para cada franja.
-    				temperatura_diurna_promedio = Math.round( calcularPromedio(temperaturas_diurnas) * 10) / 10;
-    				temperatura_nocturna_promedio = Math.round( calcularPromedio(temperaturas_nocturnas)* 10) / 10;
+	    				//Esto es serio candidato al refactor pero tiempos desesperados requieren medidas desesperadas ?)
+	    				if(es_ultimo){
+	    					//Agrego la temperatura de ese dia y ese horario al arreglo de la franja que 
+	    					//corresponde
+	    					if (horarios_diurnos.includes(horario)) {
+	    						temperaturas_diurnas.push(elemento.main.temp);
+	    						icono_dia = elemento.weather[0].icon[0] + elemento.weather[0].icon[1]; 
+	    						estados_del_clima_diurnos.push(icono_dia);
+	    					} else if (horarios_nocturnos.includes(horario)){
+	    						temperaturas_nocturnas.push(elemento.main.temp);
+	    						icono_noche = elemento.weather[0].icon[0] + elemento.weather[0].icon[1];
+	    						estados_del_clima_nocturnos.push(icono_noche);
+	    					}
+	    				}
+	    				
+	    				//Calculo el promedio diurno y nocturno con los valores obtenidos para cada franja.
+	    				temperatura_diurna_promedio = Math.round( calcularPromedio(temperaturas_diurnas) * 10) / 10;
+	    				temperatura_nocturna_promedio = Math.round( calcularPromedio(temperaturas_nocturnas)* 10) / 10;
 
 
-    				//Calculo del promedio de estado climatico para franja diurna y nocturna.
-    				estado_del_clima_diurno_final = obtenerIcono(estados_del_clima_diurnos,true);
-    				estado_del_clima_nocturno_final = obtenerIcono(estados_del_clima_nocturnos,false);
-    				
-    				
-    				//Agrego ambos promedios al resultado final.
-					temperaturas_diurna_y_nocturna_promedio_por_dia.push(temperatura_diurna_promedio);
-					temperaturas_diurna_y_nocturna_promedio_por_dia.push(temperatura_nocturna_promedio);    				
-					
-					estados_clima_diurnos_y_nocturnos_final_por_dia.push(estado_del_clima_diurno_final);
-					estados_clima_diurnos_y_nocturnos_final_por_dia.push(estado_del_clima_nocturno_final);
+	    				//Calculo del promedio de estado climatico para franja diurna y nocturna.
+	    				estado_del_clima_diurno_final = obtenerIcono(estados_del_clima_diurnos,true);
+	    				estado_del_clima_nocturno_final = obtenerIcono(estados_del_clima_nocturnos,false);
+	    				
+	    				
+	    				//Agrego ambos promedios al resultado final.
+						temperaturas_diurna_y_nocturna_promedio_por_dia.push(temperatura_diurna_promedio);
+						temperaturas_diurna_y_nocturna_promedio_por_dia.push(temperatura_nocturna_promedio);    				
+						
+						estados_clima_diurnos_y_nocturnos_final_por_dia.push(estado_del_clima_diurno_final);
+						estados_clima_diurnos_y_nocturnos_final_por_dia.push(estado_del_clima_nocturno_final);
 
-					//Reset de variables para que empiece el nuevo calculo.
-					temperaturas_diurnas = [];
-					temperaturas_nocturnas = [];
+						//Reset de variables para que empiece el nuevo calculo.
+						temperaturas_diurnas = [];
+						temperaturas_nocturnas = [];
 
-					estados_del_clima_nocturnos = [];
-					estados_del_clima_diurnos = [];
-    				
-    				dia_analizado = dia_nuevo;
-    				if (!es_ultimo) dias_medidos.push(dia_analizado);
-    				
-    				dia_cambio = false;
-    				es_ultimo = false;
-    			}
-    			
-    			//Limito siempre a 5 dias analizados, esto es por la variabilidad de los
-    			//datos entregados en el Json al momento de hacer la request.
-    			if (dias_procesados == cantidad_de_dias) break;
+						estados_del_clima_nocturnos = [];
+						estados_del_clima_diurnos = [];
+	    				
+	    				dia_analizado = dia_nuevo;
+	    				if (!es_ultimo) dias_medidos.push(dia_analizado);
+	    				
+	    				dia_cambio = false;
+	    				es_ultimo = false;
+	    			}
+	    			
+	    			//Limito siempre a 5 dias analizados, esto es por la variabilidad de los
+	    			//datos entregados en el Json al momento de hacer la request.
+	    			if (dias_procesados == cantidad_de_dias) break;
 
-    			//Agrego la temperatura de ese dia y ese horario al arreglo de la franja que 
-    			//corresponde
-    			if (horarios_diurnos.includes(horario)) {
-    				temperaturas_diurnas.push(elemento.main.temp);
-    				icono_dia = elemento.weather[0].icon[0] + elemento.weather[0].icon[1];
-    				estados_del_clima_diurnos.push(icono_dia);
-    			} else if (horarios_nocturnos.includes(horario)){
-    				temperaturas_nocturnas.push(elemento.main.temp);
-    				icono_noche = elemento.weather[0].icon[0] + elemento.weather[0].icon[1];
-    				estados_del_clima_nocturnos.push(icono_noche);
-    			}
-			}
-	    	
-	    	//convierto las temperaturas a formato JSON
-	    	var datos_de_salida = hacerJsonClima(temperaturas_diurna_y_nocturna_promedio_por_dia, estados_clima_diurnos_y_nocturnos_final_por_dia,dias_medidos);
-			
-			//Se devuelve el JSON con el formato de dos temperaturas y dos estados por dia
-	        res.send( datos_de_salida );
-	    });
-	});
+	    			//Agrego la temperatura de ese dia y ese horario al arreglo de la franja que 
+	    			//corresponde
+	    			if (horarios_diurnos.includes(horario)) {
+	    				temperaturas_diurnas.push(elemento.main.temp);
+	    				icono_dia = elemento.weather[0].icon[0] + elemento.weather[0].icon[1];
+	    				estados_del_clima_diurnos.push(icono_dia);
+	    			} else if (horarios_nocturnos.includes(horario)){
+	    				temperaturas_nocturnas.push(elemento.main.temp);
+	    				icono_noche = elemento.weather[0].icon[0] + elemento.weather[0].icon[1];
+	    				estados_del_clima_nocturnos.push(icono_noche);
+	    			}
+				}
+		    	
+		    	//convierto las temperaturas a formato JSON
+		    	var datos_de_salida = hacerJsonClima(temperaturas_diurna_y_nocturna_promedio_por_dia, estados_clima_diurnos_y_nocturnos_final_por_dia,dias_medidos);
+				
+				//Se devuelve el JSON con el formato de dos temperaturas y dos estados por dia
+		        res.send( datos_de_salida );
+		    });
+		});
 
-	getReq.end();
-	getReq.on('error', function(err){
-		console.log("Error: ", err);
-	});	
+		getReq.end();
+		getReq.on('error', function(err){
+			console.log("Error: ", err);
+		});	
+	}
+
 })
 
 app.get('/cities', function(req, res){
