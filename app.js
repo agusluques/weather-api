@@ -58,17 +58,18 @@ function obtenerIcono(arreglo_de_iconos, es_de_dia) {
 	return (icono_final+"n");
 }
 
-function hacerJsonClima(datos, estados){
+function hacerJsonClima(datos, estados ,dias){
 	var iterador_datos = 0;
 	var resultado = [
-		{"temp_diurna":"","estado_dia":"","temp_nocturna":"","estado_noche":""},
-		{"temp_diurna":"","estado_dia":"","temp_nocturna":"","estado_noche":""},
-		{"temp_diurna":"","estado_dia":"","temp_nocturna":"","estado_noche":""},
-		{"temp_diurna":"","estado_dia":"","temp_nocturna":"","estado_noche":""},
-		{"temp_diurna":"","estado_dia":"","temp_nocturna":"","estado_noche":""}
+		{"fecha":"","temp_diurna":"","estado_dia":"","temp_nocturna":"","estado_noche":""},
+		{"fecha":"","temp_diurna":"","estado_dia":"","temp_nocturna":"","estado_noche":""},
+		{"fecha":"","temp_diurna":"","estado_dia":"","temp_nocturna":"","estado_noche":""},
+		{"fecha":"","temp_diurna":"","estado_dia":"","temp_nocturna":"","estado_noche":""},
+		{"fecha":"","temp_diurna":"","estado_dia":"","temp_nocturna":"","estado_noche":""}
 		];
 	
 	for (var i = 0; i < cantidad_de_dias; i++) {
+		resultado[i].fecha = dias[i];
 		resultado[i].temp_diurna = datos[iterador_datos];
 		resultado[i].estado_dia = estados[iterador_datos];
 		iterador_datos++;
@@ -114,11 +115,14 @@ app.get('/weather/:city_id', function(req, res){
 	    	var estados_del_clima_nocturnos = [];
 	    	
 	    	//Tomo el primer dia de la muestra para entrar en el loop
+	    	var dias_medidos = [];
 	    	var dia_analizado = (data_json.list[0].dt_txt);
 	    	dia_analizado = (dia_analizado.match(/[0-9]*-[0-9]*-[0-9]*/g)).toString();
+	    	dias_medidos.push(dia_analizado);
 
 	    	var cantidad_de_elementos = data_json.cnt;
 	    	var dias_procesados = 0;
+
 	    	
 	    	for (var j = 0; j < cantidad_de_elementos; j++) {
 	    		
@@ -193,6 +197,7 @@ app.get('/weather/:city_id', function(req, res){
 					estados_del_clima_diurnos = [];
     				
     				dia_analizado = dia_nuevo;
+    				if (!es_ultimo) dias_medidos.push(dia_analizado);
     				
     				dia_cambio = false;
     				es_ultimo = false;
@@ -216,7 +221,7 @@ app.get('/weather/:city_id', function(req, res){
 			}
 	    	
 	    	//convierto las temperaturas a formato JSON
-	    	var datos_de_salida = hacerJsonClima(temperaturas_diurna_y_nocturna_promedio_por_dia, estados_clima_diurnos_y_nocturnos_final_por_dia);
+	    	var datos_de_salida = hacerJsonClima(temperaturas_diurna_y_nocturna_promedio_por_dia, estados_clima_diurnos_y_nocturnos_final_por_dia,dias_medidos);
 			
 			//Se devuelve el JSON con el formato de dos temperaturas y dos estados por dia
 	        res.send( datos_de_salida );
