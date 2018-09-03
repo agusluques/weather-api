@@ -19,6 +19,7 @@
   },
   "homepage": "https://github.com/agusluques/weather-api#readme",
   "dependencies": {
+    "dateformat": "^3.0.3",
     "express": "^4.16.3",
     "fs": "0.0.1-security",
     "https": "^1.0.0",

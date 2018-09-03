@@ -2,6 +2,7 @@ var express = require('express');
 var https = require('https');
 var fs = require('fs');
 var _ = require('underscore');
+var dateFormat = require('dateformat');
 var mock = require('./mock.js');
 
 var app = express();
@@ -120,8 +121,7 @@ app.get('/weather/:city_id', function(req, res){
 		    	
 		    	//Tomo el primer dia de la muestra para entrar en el loop
 		    	var dias_medidos = [];
-		    	var dia_analizado = (data_json.list[0].dt_txt);
-		    	dia_analizado = (dia_analizado.match(/[0-9]*-[0-9]*-[0-9]*/g)).toString();
+		    	var dia_analizado = dateFormat(new Date(data_json.list[0].dt_txt + " UTC"), "yyyy-mm-dd HH:MM:ss");
 		    	dias_medidos.push(dia_analizado);
 
 		    	var cantidad_de_elementos = data_json.cnt;
@@ -138,7 +138,9 @@ app.get('/weather/:city_id', function(req, res){
 		    		if (j == (cantidad_de_elementos-1)) es_ultimo = true;
 
 		    		var elemento = data_json.list[j];
-		    		var fecha_y_hora = elemento.dt_txt;
+		  
+		    		var fecha_y_hora = dateFormat(new Date(elemento.dt_txt + " UTC"), "yyyy-mm-dd HH:MM:ss");
+		    		
 		    		
 		    		//Obtengo el dia a partir del parametro "dt_txt" para saber cuando cambia
 		    		var dia_nuevo = fecha_y_hora;
