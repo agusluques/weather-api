@@ -5,6 +5,7 @@ var _ = require('underscore');
 var dateFormat = require('dateformat');
 var mock = require('./mock.js');
 
+
 var app = express();
 
 // se usa para levantar el archivo solo 1 vez y guardarlo en memoria del servidor
@@ -231,8 +232,37 @@ app.get('/weather/:city_id', function(req, res){
 		    	//convierto las temperaturas a formato JSON
 		    	var datos_de_salida = hacerJsonClima(temperaturas_diurna_y_nocturna_promedio_por_dia, estados_clima_diurnos_y_nocturnos_final_por_dia,dias_medidos);
 				
-				//Se devuelve el JSON con el formato de dos temperaturas y dos estados por dia
-		        res.send( datos_de_salida );
+		    	// Llamo a la api para que me devuelva el clima actual y lo reemplazo en el dia de hoy a la noche si es que es nulo
+		    	if (datos_de_salida[0].temp_nocturna == null || isNaN(datos_de_salida[0].temp_nocturna)){
+		    		var options = {
+						host :  'api.openweathermap.org',
+						port : 443,
+						path : '/data/2.5/weather?id=' + req.params.city_id + API_KEY + unidad_temp,
+						method : 'GET'
+					}
+
+					var getReq = https.request(options, function(result) {
+						result.on('data', function(data) {
+					    	data_json = JSON.parse(data);
+						    
+						    datos_de_salida[0].temp_nocturna = data_json.main.temp;
+						    datos_de_salida[0].estado_noche = data_json.weather[0].icon;
+
+						    //Se devuelve el JSON con el formato de dos temperaturas y dos estados por dia
+		        			res.send( datos_de_salida );
+					    });
+					});
+
+					getReq.on('error', function(err){
+						console.log("Error: ", err);
+					});	
+
+					getReq.end();
+					
+		    	} else{
+					//Se devuelve el JSON con el formato de dos temperaturas y dos estados por dia
+			        res.send( datos_de_salida );
+			    }
 		    });
 		});
 
