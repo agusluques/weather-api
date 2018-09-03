@@ -295,7 +295,7 @@ app.listen(PORT, function () {
 		if (err) throw err;
 		archivo_ciudades = JSON.parse(data);
 
-		archivo_ciudades = archivo_ciudades.filter(el => el.country = 'AR');
+		archivo_ciudades = archivo_ciudades.filter(el => el.country == 'AR');
 		console.log('Archivo cargado y filtrado por ciudades de Argentina.');
 	});
 });
