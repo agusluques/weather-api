@@ -124,7 +124,7 @@ app.get('/weather/:city_id', function(req, res){
 		    	
 		    	//Tomo el primer dia de la muestra para entrar en el loop
 		    	var dias_medidos = [];
-		    	var dia_analizado = dateFormat(new Date(data_json.list[0].dt_txt + " UTC"), "yyyy-mm-dd HH:MM:ss");
+		    	var dia_analizado = dateFormat(new Date(data_json.list[0].dt_txt + " UTC"), "yyyy-mm-dd");
 		    	dias_medidos.push(dia_analizado);
 
 		    	var cantidad_de_elementos = data_json.cnt;
