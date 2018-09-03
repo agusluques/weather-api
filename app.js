@@ -53,6 +53,8 @@ function obtenerIcono(arreglo_de_iconos, es_de_dia) {
             maxCount = modeMap[el];
         }
     }
+
+    if(icono_final.localeCompare("") == 0) icono_final = arreglo_de_iconos[0];
     
 	if (es_de_dia) return (icono_final+"d");
 	return (icono_final+"n");
